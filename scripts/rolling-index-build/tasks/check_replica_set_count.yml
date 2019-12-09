@@ -1,0 +1,6 @@
+---
+- name: Check if replica set has 3 members
+  fail:
+    msg: Number of replicas != 3
+  when: replica_set_status.members|length != 3
+  

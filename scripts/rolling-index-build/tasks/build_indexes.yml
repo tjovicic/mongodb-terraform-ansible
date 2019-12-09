@@ -1,0 +1,4 @@
+---
+- name: Run index script
+  shell: |
+    mongo {{ database }} --quiet --port 27217 -u {{ username }} -p {{ password }} --authenticationDatabase admin '/tmp/june.db.js'

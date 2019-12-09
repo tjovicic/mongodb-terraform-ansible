@@ -1,0 +1,10 @@
+credentials.json
+.terraform
+*.tfstate*
+*.plan
+keyfile
+inventory
+auth.env
+.idea
+replica*.sh
+venv/

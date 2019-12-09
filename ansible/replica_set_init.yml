@@ -1,0 +1,33 @@
+---
+- hosts: primary
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Install py-mongo
+      apt: 
+        name: ['python-pymongo']
+        state: present 
+        update_cache: yes
+    - name: Initialize the replication set
+      script: replica_init.sh 
+    - name: Pause for 5 seconds
+      pause:
+        seconds: 5
+    - name: Create admin user
+      script: replica_admin_create.sh
+    - name: Pause for 5 seconds
+      pause:
+        seconds: 5
+    - name: Add second replica members the replication set
+      script: replica_add_second_host.sh 
+    - name: Pause for 5 seconds
+      pause:
+        seconds: 5
+    - name: Add third replica members the replication set
+      script: replica_add_third_host.sh 
+    - name: Pause for 5 seconds
+      pause:
+        seconds: 5
+    - name: Revert secondaries priority and votes
+      script: replica_secondaries_reconfigure.sh 

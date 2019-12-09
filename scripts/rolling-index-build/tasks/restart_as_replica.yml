@@ -1,0 +1,15 @@
+---
+- name: Revert to original port
+  replace: 
+    path: /etc/mongod.conf 
+    regexp: '^  port: 27217$' 
+    replace: '  port: 27017'
+- name: Remove comments
+  replace:
+    path: /etc/mongod.conf
+    regexp: '^#(.*)'
+    replace: '\1'
+- name: Restart mongod 
+  systemd:
+    name: mongod
+    state: restarted

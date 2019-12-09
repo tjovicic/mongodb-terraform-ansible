@@ -1,0 +1,13 @@
+---
+- name: Copy index build script
+  import_playbook: ./copy_index_build_script.yaml
+
+- name: Build index on second replica
+  import_playbook: ./index_build_second_replica.yml
+
+- name: Build index on third replica
+  import_playbook: ./index_build_third_replica.yml
+
+- name: Build index on primary
+  import_playbook: ./index_build_first_replica.yml
+

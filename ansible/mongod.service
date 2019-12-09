@@ -1,0 +1,24 @@
+[Unit]
+Description=High-performance, schema-free document-oriented database
+
+[Service]
+User=mongodb
+Group=mongodb
+ExecStart=/usr/bin/mongod --quiet --config /etc/mongod.conf
+# (file size)
+LimitFSIZE=infinity
+# (cpu time)
+LimitCPU=infinity
+# (virtual memory size)
+LimitAS=infinity
+# (locked-in-memory size)
+LimitMEMLOCK=infinity
+# (open files)
+LimitNOFILE=64000
+# (processes/threads)
+LimitNPROC=64000
+# Runtime dir
+RuntimeDirectory=mongodb
+
+[Install]
+WantedBy=multi-user.target

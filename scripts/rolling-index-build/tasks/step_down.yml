@@ -1,0 +1,8 @@
+---
+- name: Step down primary replica(will cause an error)
+  shell: |
+    mongo --quiet -u {{ username }} -p {{ password }} --authenticationDatabase admin --eval 'rs.stepDown()'
+  ignore_errors: yes
+- name: Pause for 10 seconds
+  pause:
+    seconds: 10

@@ -1,0 +1,172 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Add ppa key
+      apt_key:
+        keyserver: hkp://keyserver.ubuntu.com:80
+        id: 0C49F3730359A14518585931BC711F9BA15703C6
+        state: present
+
+    - name: Add sources list
+      lineinfile:
+        line: 'deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse'
+        dest: /etc/apt/sources.list.d/mongodb-org-3.4.list
+        state: present
+        create: yes
+
+    - name: Install mongo
+      apt: 
+        name: ['mongodb-org', 'mongodb-org-server', 'mongodb-org-shell', 'mongodb-org-mongos', 'mongodb-org-tools'] 
+        state: present 
+        update_cache: yes
+
+    - name: Format disk as xfs partition
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdb
+
+    - name: Create mongodb group
+      group:
+        name: mongodb
+        state: present
+
+    - name: Create mongo user
+      user:
+        name: mongodb
+        group: mongodb
+        state: present
+    
+    - name: Create mountable directory
+      file:
+        path: /data/db
+        state: directory
+
+    - name: Mount partition to directory
+      mount: 
+        path: /data/db
+        src: /dev/sdb
+        fstype: xfs
+        opts: noatime
+        state: mounted
+
+    - name: Change directory permissions after mount
+      file:
+        path: /data/db
+        state: directory
+        owner: mongodb
+        group: mongodb
+        mode: 0755
+        recurse: yes
+
+    - name: Set vm swappiness to 1
+      sysctl:
+        name: vm.swappiness
+        value: '1'
+        state: present
+    
+    - name: Configure sufficient file handles
+      sysctl:
+        name: fs.file-max
+        value: '98000'
+        state: present
+
+    - name: Configure kernel pid limit
+      sysctl:
+        name: kernel.pid_max
+        value: '64000'
+        state: present
+
+    - name: Configure maximum threads per process
+      sysctl:
+        name: kernel.threads-max
+        value: '64000'
+        state: present
+
+    - name: Configure maximum number of memory map areas per process 
+      sysctl:
+        name: vm.max_map_count
+        value: '128000'
+        state: present
+    
+    - name: Configure TCP keepalive setting 
+      sysctl:
+        name: net.ipv4.tcp_keepalive_time
+        value: '300'
+        state: present
+    
+    - name: Modify /etc/hosts file
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item].internal_ip }} {{item}}"
+        state: present
+      with_items: "{{ groups.all }}"
+
+    - name: Copy keyfile for authentication
+      copy:
+        src: keyfile
+        dest: /etc/mongodb-keyfile
+        owner: mongodb
+        group: root
+        mode: 0600
+    
+    - name: Create log dir if missing
+      file:
+        path: /var/log/mongodb 
+        state: directory
+        owner: mongodb
+        group: mongodb
+        mode: 0755
+        recurse: true
+
+    - name: Copy logrotate conf
+      copy:
+        src: logrotate-monogd.conf
+        dest: /etc/logrotate.d/mongodb
+        owner: root
+        group: root
+        mode: 0644
+    
+    - name: Copy conf file
+      copy:
+        src: mongod.conf
+        dest: /etc/mongod.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Add systemd configuration
+      copy:
+        src: mongod.service
+        dest: /etc/systemd/system/mongod.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Create disable transparent hugepages systemd service file
+      copy:
+        src: disable-transparent-hugepages.service
+        dest: /etc/systemd/system/disable-transparent-hugepages.service
+        owner: root
+        group: root
+        mode: 0644
+    
+    - name: Reboot
+      reboot:
+
+    - name: Start disable-transparent-hugepages.service
+      systemd:
+        name: disable-transparent-hugepages
+        daemon_reload: true
+        enabled: true
+        state: started
+    
+    - name: Start mongod service
+      systemd:
+        name: mongod
+        state: started
+        enabled: true
+        daemon_reload: yes

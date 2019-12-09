@@ -1,0 +1,5 @@
+---
+- name: Freeze replica
+  shell: |
+    mongo --quiet -u {{ username }} -p {{ password }} --authenticationDatabase admin --eval 'rs.freeze(120)'
+  ignore_errors: yes

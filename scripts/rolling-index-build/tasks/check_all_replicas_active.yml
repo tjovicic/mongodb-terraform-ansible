@@ -1,0 +1,8 @@
+---
+- name: Check if all replica set members are active
+  fail:
+    msg: Replica set not in right state
+  when: > 
+    (replica_set_status.members[0].stateStr != "PRIMARY") or 
+    (replica_set_status.members[1].stateStr != "SECONDARY") or 
+    (replica_set_status.members[2].stateStr != "SECONDARY")

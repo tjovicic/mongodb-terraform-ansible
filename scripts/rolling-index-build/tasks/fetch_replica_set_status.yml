@@ -1,0 +1,9 @@
+---
+- name: Get replica set status
+  shell: |
+    mongo --quiet -u {{ username }} -p {{ password }} --authenticationDatabase admin --eval 'JSON.stringify(rs.status())'
+  register: output
+
+- name: Format replica set status
+  set_fact:
+    replica_set_status: "{{ output.stdout|from_json }}"

@@ -1,0 +1,58 @@
+---
+- name: Collect facts about system services
+  service_facts:
+  register: services_out
+- name: Set services fact 
+  set_fact:
+    services_state: "{{ services_out.ansible_facts.services }}"
+- name: Check if mongod service exist
+  fail:
+    msg: mongod service does not exist
+  when: "'mongod.service' not in services_state"
+- name: Set mongo service fact 
+  set_fact:
+    mongod: "{{ services_state['mongod.service'] }}"
+- name: Check if mongod service is running
+  fail:
+    msg: mongod service is not running
+  when: mongod.state != "running"
+- name: Stop mongod
+  command: mongod --shutdown
+- name: Collect facts about system services
+  service_facts:
+  register: services_out
+- name: Set services fact
+  set_fact:
+    services_state: "{{ services_out.ansible_facts.services }}"
+- name: Set mongo service fact
+  set_fact:
+    mongod: "{{ services_state['mongod.service'] }}"
+- name: Check if mongod service is running
+  fail:
+    msg: mongod service is still running
+  when: mongod.state == "running"
+- name: "Ensure /etc/mongod.conf contains 'port: 27017'"
+  lineinfile:
+    name: /etc/mongod.conf
+    line: "  port: 27017"
+    state: present
+  check_mode: yes
+  register: mongod_conf
+- name: Exit if error
+  fail:
+    msg: "/etc/mongod.conf doesn't contain 'port: 27017'"
+  when: (mongod_conf is changed) or (mongod_conf is failed)
+- name: Change replica port
+  replace: 
+    path: /etc/mongod.conf 
+    regexp: '^  port: 27017$' 
+    replace: '  port: 27217'
+- name: Comment out replication parameters
+  replace:
+    path: /etc/mongod.conf
+    regexp: '((replication.*)|(.*oplogSizeMB.*)|(.*replSetName.*))'
+    replace: '#\1'
+- name: Start mongod 
+  systemd:
+    name: mongod
+    state: started

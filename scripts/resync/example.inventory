@@ -1,0 +1,5 @@
+[replica]
+test-sandbox-mongo-01.elly.ai ansible_host=34.74.241.155 db_path=/data/db
+
+[all:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

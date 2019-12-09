@@ -1,0 +1,28 @@
+---
+- hosts: replica
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Stop replica
+      command: mongod --shutdown
+    - name: Collect facts about system services
+      service_facts:
+      register: services_out
+    - name: Set services fact
+      set_fact:
+        services_state: "{{ services_out.ansible_facts.services }}"
+    - name: Set mongo service fact
+      set_fact:
+        mongod: "{{ services_state['mongod.service'] }}"
+    - name: Check if mongod service is running
+      fail:
+        msg: mongod service is still running
+      when: mongod.state == "running"
+    - name: Empty data directory
+      shell: /bin/rm -rf {{ db_path }}/*
+    - name: Start mongod
+      systemd:
+        name: mongod
+        state: started
+

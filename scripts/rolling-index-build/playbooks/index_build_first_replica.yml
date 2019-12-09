@@ -1,0 +1,57 @@
+---
+- name: Check replica set status
+  import_playbook: ./primary_check_all_replicas_active.yml
+
+- hosts: secondaries[1]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Freeze third replica so that second one becomes primary
+      import_tasks: ../tasks/freeze.yml
+
+- hosts: primary
+  become: yes
+  become_user: root
+  tasks:
+    - name: Step down primary replica
+      import_tasks: ../tasks/step_down.yml
+    - name: Restart secondary as standalone
+      import_tasks: ../tasks/restart_as_standalone.yml
+
+- hosts: secondaries[0]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Fetch replica set status
+      import_tasks: ../tasks/fetch_replica_set_status.yml
+    - name: Check replica set count
+      import_tasks: ../tasks/check_replica_set_count.yml
+    - name: Check replicas active
+      import_tasks: ../tasks/check_first_replica_not_active.yml
+
+- hosts: primary
+  become: yes
+  become_user: root
+  tasks:
+    - name: Build indexes
+      import_tasks: ../tasks/build_indexes.yml
+    - name: Restart primary as replica
+      import_tasks: ../tasks/restart_as_replica.yml
+
+- hosts: secondaries[1]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Freeze third replica so that second one becomes primary
+      import_tasks: ../tasks/freeze.yml
+
+- hosts: secondaries[0]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Step down primary replica
+      import_tasks: ../tasks/step_down.yml
+
+- name: Check replica set status
+  import_playbook: ./primary_check_all_replicas_active.yml
+

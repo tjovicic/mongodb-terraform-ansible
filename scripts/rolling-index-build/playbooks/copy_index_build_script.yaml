@@ -1,0 +1,11 @@
+- hosts: all
+  become: yes
+  become_user: root
+  tasks:
+    - name: Copy index script to remote
+      copy:
+        src: "{{ index_build_script_path }}"
+        dest: /tmp/june.db.js
+        owner: root
+        group: root
+        mode: '0644'

@@ -1,0 +1,30 @@
+---
+- name: Check replica set status
+  import_playbook: ./primary_check_all_replicas_active.yml
+
+- hosts: secondaries[1]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Restart secondary as standalone
+      import_tasks: ../tasks/restart_as_standalone.yml
+    - name: Build indexes
+      import_tasks: ../tasks/build_indexes.yml
+
+- hosts: primary
+  become: yes
+  become_user: root
+  tasks:
+    - name: Fetch replica set status
+      import_tasks: ../tasks/fetch_replica_set_status.yml
+    - name: Check replica set count
+      import_tasks: ../tasks/check_replica_set_count.yml
+    - name: Check replicas active
+      import_tasks: ../tasks/check_third_replica_not_active.yml
+
+- hosts: secondaries[1]
+  become: yes
+  become_user: root
+  tasks:
+    - name: Restart secondary as replica
+      import_tasks: ../tasks/restart_as_replica.yml

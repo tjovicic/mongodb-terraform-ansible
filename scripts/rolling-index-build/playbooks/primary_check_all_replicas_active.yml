@@ -1,0 +1,11 @@
+---
+- hosts: primary
+  become: yes
+  become_user: root
+  tasks:
+    - name: Fetch replica set status
+      import_tasks: ../tasks/fetch_replica_set_status.yml
+    - name: Check replica set count
+      import_tasks: ../tasks/check_replica_set_count.yml
+    - name: Check replicas active
+      import_tasks: ../tasks/check_all_replicas_active.yml
